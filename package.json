@@ -1,0 +1,56 @@
+{
+  "name": "slashy-windows",
+  "productName": "Slashy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unofficial Windows desktop wrapper for the Slashy email client",
+  "type": "module",
+  "main": "out/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p .",
+    "start": "npm run build && electron .",
+    "test": "node --test test.ts",
+    "dist": "npm run typecheck && npm run build && electron-builder --win",
+    "release": "node release.mjs"
+  },
+  "build": {
+    "appId": "com.slashy.windows",
+    "productName": "Slashy",
+    "win": {
+      "target": "nsis"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "velddev",
+      "repo": "slashy-windows",
+      "releaseType": "release"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "postal-mime": "^4.0.7",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "electron@44.7.2": true
+  },
+  "repository": "github:velddev/slashy-windows"
+}
