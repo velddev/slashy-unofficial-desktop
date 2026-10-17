@@ -1,4 +1,4 @@
-# Developing slashy-windows
+# Developing slashy-unofficial-desktop
 
 ```bash
 npm install
@@ -6,7 +6,7 @@ npm start          # build into out/ and run from source
 npm run typecheck  # tsc, strict
 npm test           # link parsing, bundle rules, network pass-through, page contracts (Node runs the .ts directly)
 npm run dist       # typecheck, build, then dist/Slashy-Setup-<version>.exe
-npm run dist:linux # typecheck, build, then dist/linux-unpacked/ and dist/Slashy-<version>.AppImage (see Linux below)
+npm run dist:linux # typecheck, build, then dist/linux-unpacked/ and dist/Slashy.AppImage (see Linux below)
 ```
 
 TypeScript throughout; esbuild builds (`build.mjs`), `tsc` only type-checks. Only erasable syntax (no enums or
@@ -44,18 +44,23 @@ plain version below the next release, not a `-qa.N` suffix: prerelease installs 
 
 ## Linux
 
-Unofficial and unreleased, but it builds and runs: `npm run dist:linux` on a Linux machine gives a plain folder
-(`dist/linux-unpacked/`, the binary is `slashy`) and an AppImage. What differs from Windows is all in
+Releases ship an AppImage; `npm run dist:linux` on a Linux machine also gives a plain folder
+(`dist/linux-unpacked/`, the binary is `slashy`). What differs from Windows is all in
 `src/platform/linux.ts`: `xdg-mime` instead of the registry ("set as default" makes Slashy the `mailto:` and `.eml`
 handler directly), and the tray icon (a packaged Linux binary has no embedded icon, so it uses the `icon.png` copied
 into `resources/`). Anything else that needs to differ per OS goes in `src/platform/`, not behind
 `process.platform` checks elsewhere.
 
-Linux finds apps, their URL schemes and file types through a `.desktop` file, and that file *is* the registration:
-`registerMailApp()` does nothing on Linux. Its name has to be `slashy.desktop`, which is `desktopName` in package.json:
-Electron derives the Wayland app_id / X11 WM_CLASS (`slashy`) from it and `xdg-mime default` refers to it. The AppImage
-carries a generated one. For the folder build, copy `dist/linux-unpacked/` somewhere (say `~/.local/share/slashy`)
-and add `~/.local/share/applications/slashy.desktop`:
+Linux finds apps, their URL schemes and file types through a `.desktop` file, and that file *is* the registration.
+Its name has to be `slashy.desktop`, which is `desktopName` in package.json: Electron derives the Wayland app_id / X11
+WM_CLASS (`slashy`) from it and `xdg-mime default` refers to it. An AppImage is just a file, so on every start
+`registerMailApp()` writes `~/.local/share/applications/slashy.desktop` (and the icon) pointing at wherever the
+AppImage is, the way the Windows build rewrites its registry entries. The AppImage is published without a version in
+its name because electron-updater only replaces it in place when the name has none; a versioned name would move it on
+every update and leave the launcher pointing at a deleted file.
+
+The folder build does nothing there, so copy `dist/linux-unpacked/` somewhere (say `~/.local/share/slashy`) and add
+`~/.local/share/applications/slashy.desktop` yourself:
 
 ```ini
 [Desktop Entry]
@@ -71,15 +76,18 @@ StartupWMClass=slashy
 ```
 
 Then `update-desktop-database ~/.local/share/applications`. `x-scheme-handler/slashyemail` is what brings the
-browser sign-in back to the app, so don't drop it. The folder build doesn't update itself; the AppImage would via
-electron-updater once `latest-linux.yml` and the AppImage are uploaded with a release, which `release.mjs` doesn't do
-yet.
+browser sign-in back to the app, so don't drop it. The folder build doesn't update itself; the AppImage does, from
+`latest-linux.yml` in each release.
 
 ## Releasing
 
 ```bash
 npm version patch   # bumps version, commits, tags vX.Y.Z
-npm run release     # pushes the tag, typechecks, builds, uploads to GitHub Releases via gh
+npm run release     # typechecks, tests, pushes the tag
 ```
+
+The tag starts `.github/workflows/release.yml`, which builds the Windows installer on a Windows runner (stamping the
+exe needs Windows, or wine) and the AppImage on Linux, then publishes both, plus `latest.yml` and `latest-linux.yml`,
+as one GitHub release. electron-builder's own publisher races itself and drops assets, so `gh` uploads them.
 
 Installed copies pick the update up within 4 hours (or on next launch) and install it when the app quits.
