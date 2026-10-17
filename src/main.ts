@@ -66,8 +66,14 @@ handle('notify:clear', (_e, tag) => {
 // --- Tray ---
 
 async function createTray() {
-  // Packaged: the exe's own icon (build/ isn't shipped). Dev: the source icon.
-  tray = new Tray(app.isPackaged ? await app.getFileIcon(process.execPath, { size: 'small' }) : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
+  // Packaged: the exe's own icon on Windows (build/ isn't shipped); on Linux a plain binary has none, so the icon.png
+  // copied into resources/. Dev: the source icon.
+  const icon = !app.isPackaged
+    ? path.join(import.meta.dirname, '..', 'build', 'icon.png')
+    : process.platform === 'linux'
+      ? path.join(process.resourcesPath, 'icon.png')
+      : await app.getFileIcon(process.execPath, { size: 'small' })
+  tray = new Tray(icon)
   tray.setToolTip('Slashy')
   tray.setContextMenu(
     Menu.buildFromTemplate([

@@ -1,5 +1,5 @@
-// Slashy as a Windows mail app: registering for mailto: and .eml, mailto: links into Slashy's composer, and the
-// one-time "set Slashy as default" card (drawn by preload/mail-card.ts).
+// Slashy as a mail app: registering for mailto: and .eml (the registry on Windows, xdg-mime on Linux), mailto: links
+// into Slashy's composer, and the one-time "set Slashy as default" card (drawn by preload/mail-card.ts).
 import { app, shell } from 'electron'
 import { execFile } from 'node:child_process'
 import path from 'node:path'
@@ -13,12 +13,16 @@ import { focus, main } from './windows.ts'
 
 const MAILTO_PROGID = 'Slashy.mailto'
 const EML_PROGID = 'Slashy.eml'
+const LINUX = process.platform === 'linux'
+const DESKTOP_FILE = 'slashy.desktop' // matches package.json desktopName
 const reg = (...args: string[]) => promisify(execFile)('reg', args)
+const xdgMime = (...args: string[]) => promisify(execFile)('xdg-mime', args)
 
 let pendingMailto: MailtoDraft | null = null // picked up by the web app via getPendingMailto once its inboxes load
 let promptSent = false
 
 export async function isMailDefault() {
+  if (LINUX) return (await xdgMime('query', 'default', 'x-scheme-handler/mailto').catch(() => ({ stdout: '' }))).stdout.trim() === DESKTOP_FILE
   // Windows 11 keeps the choice in UserChoiceLatest; older builds in UserChoice.
   const key = 'HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\mailto'
   const progId = async (k: string) => (await reg('query', k, '/v', 'ProgId').catch(() => ({ stdout: '' }))).stdout.match(/ProgId\s+REG_SZ\s+(\S+)/)?.[1]
@@ -28,7 +32,9 @@ export async function isMailDefault() {
 // Registers Slashy as a handler for mailto: links and .eml files so it shows up in Settings > Default apps and in
 // the "Open with" picker. Only makes Slashy *available*; Windows leaves picking the default to the user. Idempotent.
 // Windows 11's picker skips ProgIDs without an app identity, hence the Application subkey and Applications\<exe>.
+// On Linux the installed slashy.desktop (its MimeType line) is the registration, so there's nothing to do.
 export async function registerApp() {
+  if (LINUX) return
   const exe = process.execPath
   const command = app.isPackaged ? `"${exe}" "%1"` : `"${exe}" "${path.resolve(process.argv[1])}" "%1"`
   const classes = 'HKCU\\Software\\Classes'
@@ -63,7 +69,12 @@ export async function registerApp() {
 }
 
 // Windows only lets the user pick the default, so: register, then open Settings > Default apps on Slashy's page.
+// Linux lets us set it directly.
 export async function chooseAsDefault() {
+  if (LINUX) {
+    await xdgMime('default', DESKTOP_FILE, 'x-scheme-handler/mailto', 'message/rfc822')
+    return
+  }
   await registerApp()
   await shell.openExternal('ms-settings:defaultapps?registeredAppUser=Slashy')
 }
