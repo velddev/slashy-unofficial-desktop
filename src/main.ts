@@ -2,7 +2,7 @@
 // its own module (windows, mail, eml, desktop, bundle), Slashy-specific details are in slashy.ts and every message
 // between the app and its pages is in contracts.ts.
 import { settings } from './settings.ts' // first: pins the profile folder before anything reads it
-import { Menu, Notification, Tray, app, dialog, session } from 'electron'
+import { Menu, Notification, Tray, app, dialog, nativeImage, session } from 'electron'
 import path from 'node:path'
 import { createBundle } from './bundle.ts'
 import { noteWindowShown, startUpdates } from './desktop.ts'
@@ -67,8 +67,7 @@ handle('notify:clear', (_e, tag) => {
 // --- Tray ---
 
 async function createTray() {
-  // Packaged: wherever the OS keeps the app's icon (build/ isn't shipped). Dev: the source icon.
-  tray = new Tray(app.isPackaged ? await platform.trayIcon() : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
+  tray = new Tray(nativeImage.createEmpty()) // the icon is set below, once the (async) lookup is done
   tray.setToolTip('Slashy')
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -79,6 +78,8 @@ async function createTray() {
     ]),
   )
   tray.on('click', () => focus(main))
+  // Packaged: wherever the OS keeps the app's icon (build/ isn't shipped). Dev: the source icon.
+  tray.setImage(app.isPackaged ? await platform.trayIcon() : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
 }
 
 // --- Lifecycle ---
