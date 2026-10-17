@@ -9,7 +9,8 @@ import { noteWindowShown, startUpdates } from './desktop.ts'
 import { openEml } from './eml.ts'
 import { handle, send } from './ipc.ts'
 import { deepLinkTarget, isDeepLink, isMailto } from './links.ts'
-import { maybePromptDefault, openMailto, registerApp } from './mail.ts'
+import { maybePromptDefault, openMailto } from './mail.ts'
+import { platform } from './platform/index.ts'
 import { DEEP_LINK_PROTOCOL, STARTUP_HOSTS } from './slashy.ts'
 import { createMainWindow, focus, kinds, main, scheduleSpareCompose } from './windows.ts'
 
@@ -66,14 +67,8 @@ handle('notify:clear', (_e, tag) => {
 // --- Tray ---
 
 async function createTray() {
-  // Packaged: the exe's own icon on Windows (build/ isn't shipped); on Linux a plain binary has none, so the icon.png
-  // copied into resources/. Dev: the source icon.
-  const icon = !app.isPackaged
-    ? path.join(import.meta.dirname, '..', 'build', 'icon.png')
-    : process.platform === 'linux'
-      ? path.join(process.resourcesPath, 'icon.png')
-      : await app.getFileIcon(process.execPath, { size: 'small' })
-  tray = new Tray(icon)
+  // Packaged: wherever the OS keeps the app's icon (build/ isn't shipped). Dev: the source icon.
+  tray = new Tray(app.isPackaged ? await platform.trayIcon() : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
   tray.setToolTip('Slashy')
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -123,5 +118,5 @@ app.whenReady().then(async () => {
   handleArgs(process.argv)
   scheduleSpareCompose()
   startUpdates(bundle)
-  if (app.isPackaged) registerApp().catch(() => {}) // keeps the exe path fresh across updates
+  if (app.isPackaged) platform.registerMailApp().catch(() => {}) // keeps the exe path fresh across updates
 })

@@ -34,7 +34,8 @@ plain version below the next release, not a `-qa.N` suffix: prerelease installs 
 | `src/contracts.ts`, `src/slashy.ts` | The contracts above |
 | `src/ipc.ts`, `src/preload/ipc.ts` | Typed `handle`/`send` (main) and `invoke`/`on` (page) over those contracts |
 | `src/windows.ts` | Main window, link and compose pop-outs (+ warm spare), zoom, context menu |
-| `src/mail.ts` | Registering as mail app, `mailto:` into Slashy's composer, the "set as default" card |
+| `src/mail.ts` | `mailto:` into Slashy's composer, the "set as default" card |
+| `src/platform/` | Everything that differs per OS (mail-app registration, tray icon): `win32.ts` and `linux.ts` behind one interface in `index.ts` |
 | `src/eml.ts`, `src/eml.html` | The `.eml` viewer |
 | `src/desktop.ts` | App updates, web bundle schedule, startup timer, Settings > Desktop data |
 | `src/bundle.ts` | The web app on disk, and the network pass-through for everything else |
@@ -44,13 +45,14 @@ plain version below the next release, not a `-qa.N` suffix: prerelease installs 
 ## Linux
 
 Unofficial and unreleased, but it builds and runs: `npm run dist:linux` on a Linux machine gives a plain folder
-(`dist/linux-unpacked/`, the binary is `slashy`) and an AppImage. The platform differences live in `src/mail.ts`
-(`xdg-mime` instead of the registry: "set as default" makes Slashy the `mailto:` and `.eml` handler directly) and
-the tray in `src/main.ts` (a packaged Linux binary has no embedded icon, so it uses the `icon.png` copied into
-`resources/`).
+(`dist/linux-unpacked/`, the binary is `slashy`) and an AppImage. What differs from Windows is all in
+`src/platform/linux.ts`: `xdg-mime` instead of the registry ("set as default" makes Slashy the `mailto:` and `.eml`
+handler directly), and the tray icon (a packaged Linux binary has no embedded icon, so it uses the `icon.png` copied
+into `resources/`). Anything else that needs to differ per OS goes in `src/platform/`, not behind
+`process.platform` checks elsewhere.
 
 Linux finds apps, their URL schemes and file types through a `.desktop` file, and that file *is* the registration:
-`registerApp()` does nothing on Linux. Its name has to be `slashy.desktop`, which is `desktopName` in package.json:
+`registerMailApp()` does nothing on Linux. Its name has to be `slashy.desktop`, which is `desktopName` in package.json:
 Electron derives the Wayland app_id / X11 WM_CLASS (`slashy`) from it and `xdg-mime default` refers to it. The AppImage
 carries a generated one. For the folder build, copy `dist/linux-unpacked/` somewhere (say `~/.local/share/slashy`)
 and add `~/.local/share/applications/slashy.desktop`:
