@@ -6,7 +6,7 @@ import path from 'node:path'
 import type { Bundle } from './bundle.ts'
 import type { DesktopAction, UpdateState } from './contracts.ts'
 import { handle } from './ipc.ts'
-import { chooseAsDefault, isMailDefault } from './mail.ts'
+import { platform } from './platform/index.ts'
 import { settings, saveSettings } from './settings.ts'
 import { isComposing, kinds, reloadAll, resetZoom } from './windows.ts'
 
@@ -77,7 +77,7 @@ handle('desktop:info', async () => ({
   startup: settings.lastStartup ?? null,
   openAtLogin: app.getLoginItemSettings(loginItem).openAtLogin,
   keepRunning: settings.keepRunning !== false,
-  mailDefault: await isMailDefault(),
+  mailDefault: await platform.isMailDefault(),
   zoom: Math.round(100 * 1.2 ** (settings.zoom ?? 0)),
 }))
 
@@ -89,7 +89,7 @@ const actions: Record<DesktopAction, (value: boolean) => unknown> = {
   'apply-bundle': async () => (await bundle.apply()) && reloadAll(),
   'open-at-login': (value) => app.setLoginItemSettings({ ...loginItem, openAtLogin: value }),
   'keep-running': (value) => saveSettings({ keepRunning: value }),
-  'set-mail-default': () => chooseAsDefault(),
+  'set-mail-default': () => platform.chooseMailDefault(),
   'reset-zoom': () => resetZoom(),
 }
 

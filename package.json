@@ -6,12 +6,14 @@
   "description": "Unofficial Windows desktop wrapper for the Slashy email client",
   "type": "module",
   "main": "out/main.js",
+  "desktopName": "slashy.desktop",
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc -p .",
     "start": "npm run build && electron .",
     "test": "node --test test.ts",
     "dist": "npm run typecheck && npm run build && electron-builder --win",
+    "dist:linux": "npm run typecheck && npm run build && electron-builder --linux",
     "release": "node release.mjs"
   },
   "build": {
@@ -19,6 +21,35 @@
     "productName": "Slashy",
     "win": {
       "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "dir",
+        "AppImage"
+      ],
+      "category": "Network;Email",
+      "description": "Unofficial desktop wrapper for the Slashy email client",
+      "executableName": "slashy",
+      "syncDesktopName": true,
+      "mimeTypes": [
+        "x-scheme-handler/mailto",
+        "message/rfc822"
+      ],
+      "protocols": [
+        {
+          "name": "Slashy",
+          "schemes": [
+            "slashyemail"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "build/icon.png",
+          "to": "icon.png"
+        }
+      ]
     },
     "publish": {
       "provider": "github",

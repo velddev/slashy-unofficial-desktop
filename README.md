@@ -16,6 +16,9 @@ files, drafts in their own windows, and an inbox that opens instantly and even w
 
 Requires Windows 10 or 11 (64-bit).
 
+On Linux there's no download yet, but you can build it yourself; see
+[DEVELOPMENT.md](DEVELOPMENT.md#linux).
+
 ## What you get
 
 **Notifications.** New mail shows up as a normal Windows notification. Click it to jump straight to the email.

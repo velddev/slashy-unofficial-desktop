@@ -9,7 +9,8 @@ import { noteWindowShown, startUpdates } from './desktop.ts'
 import { openEml } from './eml.ts'
 import { handle, send } from './ipc.ts'
 import { deepLinkTarget, isDeepLink, isMailto } from './links.ts'
-import { maybePromptDefault, openMailto, registerApp } from './mail.ts'
+import { maybePromptDefault, openMailto } from './mail.ts'
+import { platform } from './platform/index.ts'
 import { DEEP_LINK_PROTOCOL, STARTUP_HOSTS } from './slashy.ts'
 import { createMainWindow, focus, kinds, main, scheduleSpareCompose } from './windows.ts'
 
@@ -66,8 +67,8 @@ handle('notify:clear', (_e, tag) => {
 // --- Tray ---
 
 async function createTray() {
-  // Packaged: the exe's own icon (build/ isn't shipped). Dev: the source icon.
-  tray = new Tray(app.isPackaged ? await app.getFileIcon(process.execPath, { size: 'small' }) : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
+  // Packaged: wherever the OS keeps the app's icon (build/ isn't shipped). Dev: the source icon.
+  tray = new Tray(app.isPackaged ? await platform.trayIcon() : path.join(import.meta.dirname, '..', 'build', 'icon.png'))
   tray.setToolTip('Slashy')
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -117,5 +118,5 @@ app.whenReady().then(async () => {
   handleArgs(process.argv)
   scheduleSpareCompose()
   startUpdates(bundle)
-  if (app.isPackaged) registerApp().catch(() => {}) // keeps the exe path fresh across updates
+  if (app.isPackaged) platform.registerMailApp().catch(() => {}) // keeps the exe path fresh across updates
 })
