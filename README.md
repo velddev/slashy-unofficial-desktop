@@ -8,7 +8,7 @@ files, drafts in their own windows, and an inbox that opens instantly and even w
 
 ## Install
 
-1. Download `Slashy-Setup-<version>.exe` from the [latest release](https://github.com/velddev/slashy-windows/releases/latest).
+1. Download `Slashy-Setup-<version>.exe` from the [latest release](https://github.com/velddev/slashy-unofficial-desktop/releases/latest).
 2. Run it. It installs just for you (no admin rights needed) and adds Slashy to the Start menu and your desktop.
    Windows may show a SmartScreen warning the first time; choose **More info**, then **Run anyway**.
 3. Sign in with Google or Microsoft. Sign-in happens in your web browser; when it's done, your browser asks to open
@@ -16,8 +16,15 @@ files, drafts in their own windows, and an inbox that opens instantly and even w
 
 Requires Windows 10 or 11 (64-bit).
 
-On Linux there's no download yet, but you can build it yourself; see
-[DEVELOPMENT.md](DEVELOPMENT.md#linux).
+### Linux
+
+1. Download `Slashy.AppImage` from the [latest release](https://github.com/velddev/slashy-unofficial-desktop/releases/latest)
+   and put it somewhere it can stay, such as `~/Applications`.
+2. Make it executable (`chmod +x Slashy.AppImage`) and run it. On its first start it adds Slashy to your app
+   launcher and registers it for email links and `.eml` files.
+3. Sign in as above.
+
+Keep the file name as `Slashy.AppImage` so updates replace it in place. Requires 64-bit Linux.
 
 ## What you get
 
@@ -65,13 +72,16 @@ and installs them the next time you quit. Slashy's own app is refreshed on start
 
 Your account and email are Slashy's; this app shows the same Slashy you'd use in a browser and talks to the same
 services. On your PC it keeps its settings, your sign-in, and a copy of Slashy's app in
-`%APPDATA%\slashy-windows`.
+`%APPDATA%\slashy-windows` (on Linux, `~/.config/slashy-windows`).
 
 ## Uninstall
 
 Go to **Settings > Apps > Installed apps**, find **Slashy**, and choose **Uninstall**. This also removes Slashy as an
 email-link and `.eml` handler. To remove your sign-in and the stored copy of Slashy's app too, delete the
 `%APPDATA%\slashy-windows` folder afterwards.
+
+On Linux, delete `Slashy.AppImage`, `~/.local/share/applications/slashy.desktop` and
+`~/.local/share/icons/hicolor/512x512/apps/slashy.png`, and `~/.config/slashy-windows` for your sign-in and data.
 
 ## Troubleshooting
 

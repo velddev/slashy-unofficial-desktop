@@ -43,7 +43,7 @@
           ]
         }
       ],
-      "artifactName": "${productName}-${version}.${ext}",
+      "artifactName": "${productName}.${ext}",
       "extraResources": [
         {
           "from": "build/icon.png",
@@ -54,7 +54,7 @@
     "publish": {
       "provider": "github",
       "owner": "velddev",
-      "repo": "slashy-windows",
+      "repo": "slashy-unofficial-desktop",
       "releaseType": "release"
     },
     "nsis": {
@@ -83,5 +83,5 @@
   "allowScripts": {
     "electron@44.7.2": true
   },
-  "repository": "github:velddev/slashy-windows"
+  "repository": "github:velddev/slashy-unofficial-desktop"
 }

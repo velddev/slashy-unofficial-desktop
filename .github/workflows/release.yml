@@ -1,0 +1,58 @@
+# Pushing a vX.Y.Z tag (npm run release) builds the Windows installer and the Linux AppImage, each on its own OS (the
+# Windows build needs Windows to stamp the exe), and publishes both as one GitHub release. Installed copies update from
+# it: Windows reads latest.yml, the AppImage latest-linux.yml.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+            files: |
+              dist/*.exe
+              dist/*.exe.blockmap
+              dist/latest.yml
+          - os: ubuntu-latest
+            target: linux
+            files: |
+              dist/*.AppImage
+              dist/latest-linux.yml
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx electron-builder --${{ matrix.target }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  # electron-builder's own GitHub publisher races itself and drops assets, so gh uploads everything in one go.
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "${GITHUB_REF_NAME#v}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
